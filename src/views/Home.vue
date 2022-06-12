@@ -1,6 +1,12 @@
 <template>
   <div class="home">
     <h1>Home Page</h1>
+    <p @click="$store.commit('add')">
+      {{ $store.state.counter }}
+    </p>
+    <p @click="$store.dispatch('add')">
+      async: {{ $store.state.counter }}
+    </p>
   </div>
 </template>
 
