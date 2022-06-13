@@ -7,9 +7,9 @@
     <p @click="$store.dispatch('add')">
       async: {{ $store.state.counter }}
     </p>
-    <!-- <p>
+    <p>
       doubleCounter: {{ $store.getters.doubleCounter }}
-    </p> -->
+    </p>
   </div>
 </template>
 
