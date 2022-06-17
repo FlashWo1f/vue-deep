@@ -1,3 +1,14 @@
+// 数组响应式
+// 1. 替换数组原型中的7个能改变源数组的方法
+const originalProtp = Array.prototype
+const arrayProto = Object.create(originalProtp)
+;['push', 'pop', 'shift', 'unshift', 'splice'].forEach(method => {
+  arrayProto[method] = function () {
+    originalProtp[method].apply(this, arguments)
+    console.log('被拦截', this)
+  }
+})
+
 function defineReactive(obj, key, val) {
 
   observe(val)
@@ -29,9 +40,7 @@ function observe(obj) {
   if (typeof obj !== 'object' || obj == null) {
     return
   }
-  Object.keys(obj).forEach(key => {
-    defineReactive(obj, key, obj[key])
-  })
+  new Observer()
 }
 
 // Vue.$set
@@ -51,6 +60,28 @@ function proxy(vm) {
       }
     })
   })
+}
+
+class Observer {
+  constructor(obj) {
+    // 判断传入obj类型，做相应处理
+    if (Array.isArray(obj)) {
+      this.walkArray(obj)
+    } else {
+      this.walk(obj);
+    }
+  }
+
+  walk(obj) {
+    Object.keys(obj).forEach((key) => defineReactive(obj, key, obj[key]))
+  }
+
+  walkArray(obj) {
+    obj.__proto__ = arrayProto
+    for (let i = 0; i < obj.length; i++) {
+      observe(obj[i])
+    }
+  }
 }
 
 class KVue {
