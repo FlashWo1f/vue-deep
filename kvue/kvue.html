@@ -10,9 +10,10 @@
 
 <body>
   <div id="app">
-    <p>{{ counter }}</p>
+    <p @click="addCounter">{{ counter }}</p>
     <p k-text="counter"></p>
     <p>{{ arr }}</p>
+    k-model:counter —— <input type="text" k-model="counter">
   </div>
   <script src="./kvue.js"></script>
   <script>
@@ -21,6 +22,11 @@
       data: {
         counter: 1,
         arr: [1, 2, 3]
+      },
+      methods: {
+        addCounter() {
+          this.counter++
+        }
       },
     })
 

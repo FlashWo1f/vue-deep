@@ -40,7 +40,7 @@ function observe(obj) {
   if (typeof obj !== 'object' || obj == null) {
     return
   }
-  new Observer()
+  new Observer(obj)
 }
 
 // Vue.$set
@@ -114,21 +114,7 @@ class Compile {
     const childNodes = el.childNodes
     childNodes.forEach(node => {
       if (this.isElement(node)) {
-        // 元素: 解析动态的指令、属性绑定、事件
-        // console.log('编译元素', node.nodeName)
-        const attrs = node.attributes
-        Array.from(attrs).forEach(attr => {
-          // 判断是否动态
-          // 1. 指令 v-xxx
-          const attrName = attr.name
-          const exp = attr.value
-          if (this.isDir(attrName)) {
-            const dir = attrName.substring(2)
-            // 是否是合法指令 是则执行处理函数
-            this[dir] = this[dir](node, exp)
-          }
-        })
-
+        this.compileElement(node)        
         if (node.childNodes.length > 0) {
           this.compile(node)
         }
@@ -162,6 +148,44 @@ class Compile {
     node.textContent = val
   }
 
+  // k-model = value + update:value
+  model(node, exp) {
+    // update 方法只完成赋值和更新，不负责事件监听
+    this.update(node, exp, 'model')
+    // 手动添加事件监听
+    node.addEventListener('input', e => {
+      this.$vm[exp] = e.target.value
+    })
+  }
+
+  modelUpdater(node, val) {
+    // 表单元素赋值 不考虑少数情况 （不为 value）
+    node.value = val
+  }
+
+  compileElement(node) {
+    // 元素: 解析动态的指令、属性绑定、事件
+    // console.log('编译元素', node.nodeName)
+    const attrs = node.attributes
+    Array.from(attrs).forEach(attr => {
+      // 判断是否动态
+      // 1. 指令 v-xxx
+      const attrName = attr.name
+      const exp = attr.value
+      if (this.isDir(attrName)) {
+        const dir = attrName.substring(2)
+        // 是否是合法指令 是则执行处理函数
+        this[dir] = this[dir](node, exp)
+      }
+      // 2. 事件 以 @ 开头
+      if (this.isEvent(attrName)) {
+        const event = attrName.substring(1)
+        // 事件监听
+        this.eventHandler(node, exp, event)
+      }
+    })
+  }
+
   // 解析 {{ oox }}
   compileText(node) {
     this.update(node, (RegExp.$1).trim(), 'text')
@@ -178,6 +202,16 @@ class Compile {
 
   isDir(attrName) {
     return attrName.startsWith('k-')
+  }
+
+  isEvent(attrName) {
+    return attrName.startsWith('@')
+  }
+
+  eventHandler(node, exp, event) {
+    const fn = this.$vm.$options.methods && this.$vm.$options.methods[exp]
+    node.addEventListener(event, fn.bind(this.$vm))
+    // debugger
   }
 }
 
